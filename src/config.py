@@ -5,11 +5,14 @@ load_dotenv()
 
 # jikan API
 JIKAN_BASE_URL = "https://api.jikan.moe/v4"
-jIKAN_RATE_LIMIT_DELAY = 1.2
+JIKAN_RATE_LIMIT_DELAY = 1.2
 
 # Supabase per PostreSQL
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+
+# Database connection string
+DATABASE_URL = os.getenv("DATABASE_URL")
 
 # Paths
 RAW_DATA_PATH = "data/raw"
