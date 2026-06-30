@@ -1,8 +1,8 @@
 import pandas as pd
 from sqlalchemy import create_engine, text
 from sqlalchemy.exc import SQLAlchemyError
-from src.config import DATABASE_URL
-from src.logger import setup_logger
+from config import DATABASE_URL
+from logger import setup_logger
 
 logger = setup_logger(__name__)
 

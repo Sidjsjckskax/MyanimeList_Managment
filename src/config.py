@@ -7,10 +7,6 @@ load_dotenv()
 JIKAN_BASE_URL = "https://api.jikan.moe/v4"
 JIKAN_RATE_LIMIT_DELAY = 1.2
 
-# Supabase per PostreSQL
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_KEY = os.getenv("SUPABASE_KEY")
-
 # Database connection string
 DATABASE_URL = os.getenv("DATABASE_URL")
 
@@ -18,5 +14,5 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 RAW_DATA_PATH = "data/raw"
 FINITO_DATA_PATH = "data/finito"
 
-MAX_PAGES = 400
+MAX_PAGES = 10
 
