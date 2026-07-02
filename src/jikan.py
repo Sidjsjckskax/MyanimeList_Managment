@@ -3,8 +3,8 @@ import json
 import requests
 from pathlib import Path
 from datetime import datetime
-from src.config import JIKAN_BASE_URL, JIKAN_RATE_LIMIT_DELAY, RAW_DATA_PATH, MAX_PAGES
-from src.logger import setup_logger
+from config import JIKAN_BASE_URL, JIKAN_RATE_LIMIT_DELAY, RAW_DATA_PATH, MAX_PAGES
+from logger import setup_logger
 
 logger = setup_logger(__name__)
 
