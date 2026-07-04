@@ -1,3 +1,4 @@
+import math
 import pandas as pd
 from sqlalchemy import create_engine, text
 from sqlalchemy.exc import SQLAlchemyError
@@ -65,6 +66,10 @@ def upsert_to_database(df: pd.DataFrame, table_name: str = "anime", key_column: 
         with engine.begin() as conn:
             for idx, row in df.iterrows():
                 row_dict = row.to_dict()
+                row_dict = {
+                    k: (None if isinstance(v, float) and math.isnan(v) else v)
+                    for k, v in row_dict.items()
+                }
                 columns = ", ".join(row_dict.keys())
                 placeholders = ", ".join(f":{col}" for col in row_dict.keys())
                 update_clause = ", ".join(

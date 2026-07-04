@@ -14,5 +14,5 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 RAW_DATA_PATH = "data/raw"
 FINITO_DATA_PATH = "data/finito"
 
-MAX_PAGES = 10
+MAX_PAGES = 5
 

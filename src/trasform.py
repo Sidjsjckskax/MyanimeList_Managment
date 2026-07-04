@@ -9,12 +9,14 @@ logger = setup_logger(__name__)
 
 
 def _join_names(items: list) -> str:
+    """Trasforma una lista di dict {'name': ...} in stringa 'a, b, c'"""
     if not items:
         return None
     return ", ".join(i.get("name", "") for i in items if i.get("name"))
 
 
 def _clean_record(raw: dict) -> dict:
+    """Estrae e appiattisce i campi utili da un record Jikan grezzo"""
     aired = raw.get("aired") or {}
 
     return {
@@ -48,6 +50,7 @@ def _clean_record(raw: dict) -> dict:
 
 
 def transform_anime_data(raw_data: list[dict]) -> pd.DataFrame:
+    """Pulisce e trasforma i dati grezzi di Jikan in un DataFrame pronto per il DB"""
     logger.info(f"Trasformazione di {len(raw_data)} record grezzi")
 
     if not raw_data:
@@ -65,14 +68,18 @@ def transform_anime_data(raw_data: list[dict]) -> pd.DataFrame:
 
     for col in ("aired_from", "aired_to"):
         df[col] = pd.to_datetime(df[col], errors="coerce").dt.date
+    int_columns = ["episodes", "rank_", "popularity", "members", "favorites", "scored_by", "year_"]
+    for col in int_columns:
+        df[col] = pd.to_numeric(df[col], errors="coerce").astype("Int64")
 
-    df = df.where(pd.notnull(df), None)
+    df = df.astype(object).where(df.notna(), None)
 
     logger.info(f"Trasformazione completata: {len(df)} record puliti")
     return df
 
 
 def save_finito_data(df: pd.DataFrame) -> str:
+    """Salva i dati puliti (post-trasformazione) in formato CSV"""
     Path(FINITO_DATA_PATH).mkdir(parents=True, exist_ok=True)
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     filepath = f"{FINITO_DATA_PATH}/anime_finito_{timestamp}.csv"
