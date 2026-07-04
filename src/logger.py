@@ -1,5 +1,12 @@
-import logging
+import logging, os
 from datetime import datetime
+os.makedirs("logs", exist_ok=True)
+ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+logging.basicConfig(
+    filename=f"logs/pipeline_{ts}.log",
+    level=logging.DEBUG,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
 
 def setup_logger(name: str) -> logging.Logger:
     logger = logging.getLogger(name)

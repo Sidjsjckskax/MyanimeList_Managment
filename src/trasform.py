@@ -1,104 +1,67 @@
-import re
 import pandas as pd
-import numpy as np
-import logging
+from src.logger import setup_logger
 
-logger = logging.getLogger(__name__)
+logger = setup_logger(__name__)
 
 
-def transform(df: pd.DataFrame) -> pd.DataFrame:
-    logger.info(f"Inizio trasformazione: {len(df)} record")
-    
-    df = rimuovi_duplicati(df)
-    df = gestisci_null(df)
-    df = converti_tipi(df)
-    df = aggiungi_score_tier(df)
-    df = aggiungi_classe_durata(df)
-    
-    logger.info(f"Trasformazione completata: {len(df)} record")
+def _join_names(items: list) -> str:
+    """Trasforma una lista di dict {'name': ...} in stringa 'a, b, c'"""
+    if not items:
+        return None
+    return ", ".join(i.get("name", "") for i in items if i.get("name"))
+
+
+def _clean_record(raw: dict) -> dict:
+    """Estrae e appiattisce i campi utili da un record Jikan grezzo"""
+    aired = raw.get("aired") or {}
+
+    return {
+        "mal_id": raw.get("mal_id"),
+        "title": raw.get("title"),
+        "title_english": raw.get("title_english"),
+        "title_japanese": raw.get("title_japanese"),
+        "type_": raw.get("type"),
+        "source_": raw.get("source"),
+        "episodes": raw.get("episodes"),
+        "status_": raw.get("status"),
+        "airing": raw.get("airing"),
+        "aired_from": aired.get("from"),
+        "aired_to": aired.get("to"),
+        "duration": raw.get("duration"),
+        "rating": raw.get("rating"),
+        "score": raw.get("score"),
+        "scored_by": raw.get("scored_by"),
+        "rank_": raw.get("rank"),
+        "popularity": raw.get("popularity"),
+        "members": raw.get("members"),
+        "favorites": raw.get("favorites"),
+        "synopsis": raw.get("synopsis"),
+        "year_": raw.get("year"),
+        "season": raw.get("season"),
+        "studios": _join_names(raw.get("studios")),
+        "genres": _join_names(raw.get("genres")),
+        "themes": _join_names(raw.get("themes")),
+        "demographics": _join_names(raw.get("demographics")),
+    }
+
+
+def transform_anime_data(raw_data: list[dict]) -> pd.DataFrame:
+    """Pulisce e trasforma i dati grezzi di Jikan in un DataFrame pronto per il DB"""
+    logger.info(f"Trasformazione di {len(raw_data)} record grezzi")
+
+    cleaned = [_clean_record(r) for r in raw_data]
+    df = pd.DataFrame(cleaned)
+
+    before = len(df)
+    df = df.dropna(subset=["mal_id"])
+    df["mal_id"] = df["mal_id"].astype(int)
+    df = df.drop_duplicates(subset=["mal_id"])
+    logger.info(f"Rimossi {before - len(df)} record senza mal_id o duplicati")
+
+    for col in ("aired_from", "aired_to"):
+        df[col] = pd.to_datetime(df[col], errors="coerce").dt.date
+
+    df = df.where(pd.notnull(df), None)
+
+    logger.info(f"Trasformazione completata: {len(df)} record puliti")
     return df
-
-
-def rimuovi_duplicati(df: pd.DataFrame) -> pd.DataFrame:
-    prima = len(df)
-    df = df.drop_duplicates(subset=["mal_id"], keep="first")
-    rimossi = prima - len(df)
-    if rimossi > 0:
-        logger.info(f"Duplicati rimossi: {rimossi}")
-    return df
-
-
-def gestisci_null(df: pd.DataFrame) -> pd.DataFrame:
-    for col in ["score", "rank", "popularity", "members", "episodes", "year"]:
-        if col in df.columns:
-            n = df[col].isnull().sum()
-            df[col] = df[col].fillna(0)
-            if n > 0:
-                logger.info(f"'{col}': {n} null → 0")
-    
-    for col in ["title", "synopsis", "genres", "studios", "themes", "rating", "source", "duration", "season", "type", "status"]:
-        if col in df.columns:
-            df[col] = df[col].fillna("")
-    
-    return df
-
-
-def converti_tipi(df: pd.DataFrame) -> pd.DataFrame:
-    int_cols = ["mal_id", "episodes", "rank", "popularity", "members", "year"]
-    for col in int_cols:
-        if col in df.columns:
-            df[col] = pd.to_numeric(df[col], errors="coerce").fillna(0).astype(int)
-    
-    float_cols = ["score"]
-    for col in float_cols:
-        if col in df.columns:
-            df[col] = pd.to_numeric(df[col], errors="coerce").fillna(0.0).astype(float)
-    
-    return df
-
-
-def aggiungi_score_tier(df: pd.DataFrame) -> pd.DataFrame:
-    def classifica(score):
-        if score >= 8.5:
-            return "Masterpiece"
-        elif score >= 7.5:
-            return "Great"
-        elif score >= 6.0:
-            return "Good"
-        elif score > 0:
-            return "Average"
-        else:
-            return "Unrated"
-    
-    df["score_tier"] = df["score"].apply(classifica)
-    logger.info("score_tier creato")
-    return df
-
-
-def aggiungi_classe_durata(df: pd.DataFrame) -> pd.DataFrame:
-    def calcola_classe(row):
-        tipo = str(row.get("type", "")).strip().lower()
-        ep = int(row.get("episodes", 0))
-        
-        if "movie" in tipo:
-            return "Film Singolo"
-        elif ep == 1:
-            return "Special/OVA"
-        elif 2 <= ep <= 13:
-            return "Serie Corta"
-        elif 14 <= ep <= 26:
-            return "Serie Standard"
-        else:
-            return "Serie Lunga"
-    
-    df["classe_durata"] = df.apply(calcola_classe, axis=1)
-    logger.info("classe_durata creato")
-    return df
-
-
-if __name__ == "__main__":
-    df_test = pd.DataFrame([
-        {"mal_id": 1, "title": "Test", "score": 8.5, "episodes": 12, "type": "TV"}
-    ])
-    df_clean = transform(df_test)
-    print(df_clean)

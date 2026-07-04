@@ -1,7 +1,7 @@
-from jikan import extract_all_anime, save_raw_data
-from trasform import transform
-from load import load_to_database
-from logger import setup_logger
+from src.jikan import extract_all_anime, save_raw_data
+from src.trasform import transform_anime_data
+from src.load import load_to_database
+from src.logger import setup_logger
 
 logger = setup_logger(__name__)
 
@@ -29,7 +29,7 @@ def run_pipeline():
 
         logger.info("\n[3/3] LOAD")
         try:
-            load_to_database(df_clean)
+            upsert_to_database(df_clean)
             logger.info("Load completato")
         except Exception as e:
             logger.error(f"Load fallito: {e}", exc_info=True)
