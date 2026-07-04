@@ -1,9 +1,6 @@
-"""
-Test per src/trasform.py (fase TRANSFORM).
-"""
 import pandas as pd
 
-from src.trasform import transform_anime_data, _clean_record, _join_names
+from src.trasform import transform_anime_data, save_finito_data, _clean_record, _join_names
 
 
 RAW_SAMPLE = {
@@ -94,3 +91,20 @@ class TestTransformAnimeData:
     def test_lista_vuota_ritorna_dataframe_vuoto(self):
         df = transform_anime_data([])
         assert df.empty
+
+
+class TestSaveFinitoData:
+
+    def test_salva_csv_e_ritorna_path(self, tmp_path, monkeypatch):
+        import src.trasform as trasform_module
+        monkeypatch.setattr(trasform_module, "FINITO_DATA_PATH", str(tmp_path))
+
+        df = transform_anime_data([RAW_SAMPLE])
+        filepath = save_finito_data(df)
+
+        assert filepath.endswith(".csv")
+        assert filepath.startswith(str(tmp_path))
+
+        df_riletto = pd.read_csv(filepath)
+        assert df_riletto.iloc[0]["mal_id"] == 1
+        assert df_riletto.iloc[0]["title"] == "Cowboy Bebop"

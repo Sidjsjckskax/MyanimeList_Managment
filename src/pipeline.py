@@ -1,5 +1,5 @@
 from src.jikan import extract_all_anime, save_raw_data
-from src.trasform import transform_anime_data
+from src.trasform import transform_anime_data, save_finito_data
 from src.load import upsert_to_database
 from src.logger import setup_logger
 
@@ -26,6 +26,7 @@ def run_pipeline():
         logger.info("\n[2/3] TRANSFORM")
         try:
             df_clean = transform_anime_data(raw_data)
+            save_finito_data(df_clean)
             logger.info(f"Transform completato: {len(df_clean)} record")
         except Exception as e:
             logger.error(f"Transform fallito: {e}", exc_info=True)

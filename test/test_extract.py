@@ -1,10 +1,7 @@
-"""
-Test per src/jikan.py (fase EXTRACT).
-Usiamo mock per non fare vere chiamate all'API Jikan durante i test.
-"""
 import json
 from unittest.mock import patch, MagicMock
 
+import pandas as pd
 import pytest
 import requests
 
@@ -12,7 +9,6 @@ from src.jikan import fetch_with_retry, fetch_anime_page, extract_all_anime, sav
 
 
 def _fake_response(json_data, status_code=200):
-    """Crea una finta risposta requests.Response"""
     resp = MagicMock()
     resp.status_code = status_code
     resp.json.return_value = json_data
@@ -31,7 +27,7 @@ class TestFetchWithRetry:
         assert result == {"data": []}
         assert mock_get.call_count == 1
 
-    @patch("src.jikan.time.sleep", return_value=None)  # niente attese reali nei test
+    @patch("src.jikan.time.sleep", return_value=None)  
     @patch("src.jikan.requests.get")
     def test_rate_limit_429_poi_successo(self, mock_get, mock_sleep):
         mock_get.side_effect = [
@@ -85,19 +81,21 @@ class TestExtractAllAnime:
     def test_si_ferma_su_errore_di_rete_senza_sollevare_eccezione(self, mock_fetch):
         mock_fetch.side_effect = requests.exceptions.RequestException("errore simulato")
         result = extract_all_anime(max_pages=5)
-        assert result == []  # estrazione interrotta ma nessun crash
-
+        assert result == []
 
 class TestSaveRawData:
 
-    def test_salva_file_json_e_ritorna_path(self, tmp_path, monkeypatch):
+    def test_salva_file_csv_e_ritorna_path(self, tmp_path, monkeypatch):
         import src.jikan as jikan_module
         monkeypatch.setattr(jikan_module, "RAW_DATA_PATH", str(tmp_path))
 
-        data = [{"mal_id": 1, "title": "Test Anime"}]
+        data = [{"mal_id": 1, "title": "Test Anime", "genres": [{"name": "Action"}]}]
         filepath = save_raw_data(data)
 
+        assert filepath.endswith(".csv")
         assert filepath.startswith(str(tmp_path))
-        with open(filepath, encoding="utf-8") as f:
-            saved = json.load(f)
-        assert saved == data
+
+        df = pd.read_csv(filepath)
+        assert df.iloc[0]["mal_id"] == 1
+        assert df.iloc[0]["title"] == "Test Anime"
+        assert json.loads(df.iloc[0]["genres"]) == [{"name": "Action"}]

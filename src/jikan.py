@@ -1,6 +1,7 @@
 import time
 import json
 import requests
+import pandas as pd
 from pathlib import Path
 from datetime import datetime
 from src.config import JIKAN_BASE_URL, JIKAN_RATE_LIMIT_DELAY, RAW_DATA_PATH, MAX_PAGES
@@ -9,7 +10,6 @@ from src.logger import setup_logger
 logger = setup_logger(__name__)
 
 def fetch_with_retry(url: str, params: dict, max_retries: int = 3, timeout: int = 10) -> dict:
-    """Fetch con retry logic (exponential backoff)"""
     for attempt in range(max_retries):
         try:
             response = requests.get(url, params=params, timeout=timeout)
@@ -77,13 +77,13 @@ def extract_all_anime(max_pages: int = MAX_PAGES) -> list[dict]:
 
 
 def save_raw_data(data: list[dict]) -> str:
-    """Salva dati grezzi"""
     Path(RAW_DATA_PATH).mkdir(parents=True, exist_ok=True)
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    filepath = f"{RAW_DATA_PATH}/anime_raw_{timestamp}.json"
+    filepath = f"{RAW_DATA_PATH}/anime_raw_{timestamp}.csv"
 
-    with open(filepath, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
+    df = pd.DataFrame(data)
+    df = df.map(lambda v: json.dumps(v, ensure_ascii=False) if isinstance(v, (dict, list)) else v)
+    df.to_csv(filepath, index=False, encoding="utf-8")
 
     logger.info(f"Dati grezzi salvati: {filepath} ({len(data)} record)")
     return filepath
