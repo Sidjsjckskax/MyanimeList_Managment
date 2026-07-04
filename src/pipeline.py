@@ -8,8 +8,11 @@ logger = setup_logger(__name__)
 
 def run_pipeline():
     try:
+        logger.info("=" * 50)
         logger.info("INIZIO PIPELINE ETL")
-        
+        logger.info("=" * 50)
+
+        # EXTRACT
         logger.info("\n[1/3] EXTRACT")
         try:
             raw_data = extract_all_anime()
@@ -19,6 +22,7 @@ def run_pipeline():
             logger.error(f"Extract fallito: {e}", exc_info=True)
             raise
 
+        # TRANSFORM
         logger.info("\n[2/3] TRANSFORM")
         try:
             df_clean = transform_anime_data(raw_data)
@@ -27,6 +31,7 @@ def run_pipeline():
             logger.error(f"Transform fallito: {e}", exc_info=True)
             raise
 
+        # LOAD
         logger.info("\n[3/3] LOAD")
         try:
             upsert_to_database(df_clean)

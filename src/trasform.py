@@ -49,6 +49,10 @@ def transform_anime_data(raw_data: list[dict]) -> pd.DataFrame:
     """Pulisce e trasforma i dati grezzi di Jikan in un DataFrame pronto per il DB"""
     logger.info(f"Trasformazione di {len(raw_data)} record grezzi")
 
+    if not raw_data:
+        logger.warning("Nessun dato grezzo da trasformare")
+        return pd.DataFrame()
+
     cleaned = [_clean_record(r) for r in raw_data]
     df = pd.DataFrame(cleaned)
 
