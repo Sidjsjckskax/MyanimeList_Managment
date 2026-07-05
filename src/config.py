@@ -1,5 +1,7 @@
 import os
 from dotenv import load_dotenv
+import os
+from dotenv import load_dotenv
 
 load_dotenv()
 
@@ -13,6 +15,7 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 # Paths
 RAW_DATA_PATH = "data/raw"
 FINITO_DATA_PATH = "data/finito"
+MONITORING_LOG_PATH = "logs/monitoring.csv"
 
-MAX_PAGES = 5
+MAX_PAGES = 10
 
