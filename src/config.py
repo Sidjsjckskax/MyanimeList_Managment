@@ -19,3 +19,5 @@ MONITORING_LOG_PATH = "logs/monitoring.csv"
 
 MAX_PAGES = 10
 
+
+
