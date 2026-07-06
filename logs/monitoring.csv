@@ -1,0 +1,2 @@
+timestamp_inizio,timestamp_fine,durata_secondi,record_estratti,record_trasformati,record_caricati,stato,errore
+2026-07-06 23:34:45,2026-07-06 23:34:52,6.9,0,0,0,FALLITO,Fallito dopo 3 tentativi

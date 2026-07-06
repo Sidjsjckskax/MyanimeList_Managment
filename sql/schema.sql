@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS anime (
     aired_to DATE,
     duration TEXT,
     rating TEXT,
-    score NUMERIC(4,2),
+    score NUMERIC(4,2) CHECK (score IS NULL OR (score >= 0 AND score <= 10)),
     scored_by INTEGER,
     rank_ INTEGER,
     popularity INTEGER,
