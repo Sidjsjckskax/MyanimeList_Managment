@@ -223,4 +223,6 @@ data/finito
 
 *.pyc
 
+logs/
+
 

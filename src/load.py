@@ -97,6 +97,7 @@ def upsert_to_database(df: pd.DataFrame, table_name: str = "anime", key_column: 
         engine.dispose()
 
 
+
 if __name__ == "__main__":
     engine = get_engine()
     with engine.connect() as conn:
