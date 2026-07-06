@@ -10,6 +10,7 @@ from src.logger import setup_logger
 logger = setup_logger(__name__)
 
 def fetch_with_retry(url: str, params: dict, max_retries: int = 3, timeout: int = 10) -> dict:
+    """Fetch con retry logic (exponential backoff)"""
     for attempt in range(max_retries):
         try:
             response = requests.get(url, params=params, timeout=timeout)
@@ -34,7 +35,21 @@ def fetch_with_retry(url: str, params: dict, max_retries: int = 3, timeout: int 
             if attempt < max_retries - 1:
                 time.sleep((2 ** attempt) * 2)
             continue
-    
+
+        except requests.exceptions.HTTPError as e:
+            status = e.response.status_code if e.response is not None else None
+
+            if status is not None and 500 <= status < 600:
+                wait_time = (2 ** attempt) * 2
+                logger.warning(
+                    f"Errore server {status} al tentativo {attempt + 1}/{max_retries}. "
+                    f"Attesa {wait_time}s e nuovo tentativo."
+                )
+                if attempt < max_retries - 1:
+                    time.sleep(wait_time)
+                continue
+            raise
+
     raise requests.exceptions.RequestException(f"Fallito dopo {max_retries} tentativi")
 
 
@@ -55,6 +70,12 @@ def extract_all_anime(max_pages: int = MAX_PAGES) -> list[dict]:
             data = fetch_anime_page(page)
         except requests.exceptions.RequestException as e:
             logger.error(f"Errore pagina {page}: {e}. Estrazione fermata.")
+            if not all_anime:
+                raise
+            logger.warning(
+                f"Estrazione interrotta in anticipo per un errore, ma mantengo "
+                f"i {len(all_anime)} record già raccolti prima dell'errore"
+            )
             break
 
         records = data.get("data", [])

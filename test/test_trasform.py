@@ -93,6 +93,25 @@ class TestTransformAnimeData:
         assert df.empty
 
 
+class TestValidazionePydantic:
+
+    def test_scarta_record_con_score_impossibile(self):
+        raw_rotto = dict(RAW_SAMPLE, mal_id=2, title="Anime Rotto", score=999.0)
+        df = transform_anime_data([RAW_SAMPLE, raw_rotto])
+        assert len(df) == 1
+        assert df.iloc[0]["mal_id"] == 1
+
+    def test_scarta_record_senza_titolo(self):
+        raw_senza_titolo = dict(RAW_SAMPLE, mal_id=3, title="")
+        df = transform_anime_data([RAW_SAMPLE, raw_senza_titolo])
+        assert len(df) == 1
+
+    def test_tiene_record_con_campi_opzionali_mancanti(self):
+        raw_minimo = dict(RAW_SAMPLE, mal_id=4, title="Anime Minimo", score=None, year=None, season=None)
+        df = transform_anime_data([raw_minimo])
+        assert len(df) == 1
+
+
 class TestSaveFinitoData:
 
     def test_salva_csv_e_ritorna_path(self, tmp_path, monkeypatch):

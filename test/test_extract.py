@@ -78,10 +78,20 @@ class TestExtractAllAnime:
         assert result == []
 
     @patch("src.jikan.fetch_anime_page")
-    def test_si_ferma_su_errore_di_rete_senza_sollevare_eccezione(self, mock_fetch):
+    def test_solleva_eccezione_se_fallisce_senza_aver_raccolto_nulla(self, mock_fetch):
         mock_fetch.side_effect = requests.exceptions.RequestException("errore simulato")
+        with pytest.raises(requests.exceptions.RequestException):
+            extract_all_anime(max_pages=5)
+
+    @patch("src.jikan.time.sleep", return_value=None)
+    @patch("src.jikan.fetch_anime_page")
+    def test_mantiene_record_parziali_se_errore_dopo_alcune_pagine_riuscite(self, mock_fetch, mock_sleep):
+        mock_fetch.side_effect = [
+            {"data": [{"mal_id": 1}, {"mal_id": 2}], "pagination": {"has_next_page": True}},
+            requests.exceptions.RequestException("errore simulato a pagina 2"),
+        ]
         result = extract_all_anime(max_pages=5)
-        assert result == []
+        assert len(result) == 2
 
 class TestSaveRawData:
 

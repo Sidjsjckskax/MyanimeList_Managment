@@ -2,8 +2,10 @@ from pathlib import Path
 from datetime import datetime
 
 import pandas as pd
+from pydantic import ValidationError
 from src.config import FINITO_DATA_PATH
 from src.logger import setup_logger
+from src.schemas import AnimeClean
 
 logger = setup_logger(__name__)
 
@@ -74,8 +76,34 @@ def transform_anime_data(raw_data: list[dict]) -> pd.DataFrame:
 
     df = df.astype(object).where(df.notna(), None)
 
+    df = _validate_records(df)
+
     logger.info(f"Trasformazione completata: {len(df)} record puliti")
     return df
+
+
+def _validate_records(df: pd.DataFrame) -> pd.DataFrame:
+    if df.empty:
+        return df
+
+    validi = []
+    scartati = 0
+
+    for record in df.to_dict(orient="records"):
+        try:
+            validato = AnimeClean(**record)
+            validi.append(validato.model_dump())
+        except ValidationError as e:
+            scartati += 1
+            logger.warning(
+                f"Record scartato (mal_id={record.get('mal_id')}, "
+                f"title={record.get('title')!r}): {e.errors()[0]['msg']}"
+            )
+
+    if scartati:
+        logger.warning(f"Validazione: {scartati} record scartati su {len(df)}")
+
+    return pd.DataFrame(validi)
 
 
 def save_finito_data(df: pd.DataFrame) -> str:
