@@ -70,3 +70,41 @@ ORDER BY aired_from DESC;
 SELECT mal_id, title
 FROM anime
 WHERE synopsis IS NULL OR synopsis = '';
+
+
+-- =====================================================================
+-- MONITORAGGIO PIPELINE (tabella pipeline_runs) - per dashboard Power BI
+-- =====================================================================
+
+-- Storico completo delle esecuzioni, dalla più recente
+SELECT *
+FROM pipeline_runs
+ORDER BY timestamp_inizio DESC;
+
+-- Esito e data dell'ultima esecuzione
+SELECT *
+FROM pipeline_runs
+ORDER BY timestamp_inizio DESC
+LIMIT 1;
+
+-- Ultimi fallimenti con data/ora esatta e messaggio di errore
+SELECT timestamp_inizio, timestamp_fine, durata_secondi, errore
+FROM pipeline_runs
+WHERE stato = 'FALLITO'
+ORDER BY timestamp_inizio DESC;
+
+-- Tasso di successo e numero di esecuzioni per settimana
+SELECT
+    DATE_TRUNC('week', timestamp_inizio) AS settimana,
+    COUNT(*) AS numero_run,
+    COUNT(*) FILTER (WHERE stato = 'SUCCESSO') AS successi,
+    COUNT(*) FILTER (WHERE stato = 'FALLITO') AS fallimenti,
+    ROUND(100.0 * COUNT(*) FILTER (WHERE stato = 'SUCCESSO') / COUNT(*), 1) AS tasso_successo_pct
+FROM pipeline_runs
+GROUP BY 1
+ORDER BY 1 DESC;
+
+-- Andamento della durata delle esecuzioni nel tempo
+SELECT timestamp_inizio, durata_secondi, stato
+FROM pipeline_runs
+ORDER BY timestamp_inizio;

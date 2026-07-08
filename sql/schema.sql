@@ -26,3 +26,18 @@ CREATE TABLE IF NOT EXISTS anime (
     themes TEXT,
     demographics TEXT
 );
+
+CREATE TABLE IF NOT EXISTS pipeline_runs (
+    id SERIAL PRIMARY KEY,
+    timestamp_inizio TIMESTAMP NOT NULL,
+    timestamp_fine TIMESTAMP NOT NULL,
+    durata_secondi NUMERIC(10,1),
+    record_estratti INTEGER DEFAULT 0,
+    record_trasformati INTEGER DEFAULT 0,
+    record_caricati INTEGER DEFAULT 0,
+    stato TEXT NOT NULL CHECK (stato IN ('SUCCESSO', 'FALLITO')),
+    errore TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_pipeline_runs_timestamp
+    ON pipeline_runs (timestamp_inizio DESC);
